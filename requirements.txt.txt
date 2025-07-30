@@ -1,0 +1,6 @@
+ash==3.1.1
+pandas>=2.0
+gunicorn
+scikit-learn>=1.0
+plotly>=5.0
+dash-bootstrap-components>=1.0
