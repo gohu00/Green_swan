@@ -6,13 +6,6 @@ from dash import Dash, dcc, html, Input, Output
 import dash_bootstrap_components as dbc
 
 
-
-
-# -----------------------------
-# App Initialization
-# -----------------------------
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
 # -----------------------------
 # Load Data
 # -----------------------------
@@ -99,7 +92,7 @@ cluster['PC2'] = components_full[:, 1]
 # App Initialization
 # -----------------------------
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
-
+server = app.server
 # -----------------------------
 # Layout
 # -----------------------------
