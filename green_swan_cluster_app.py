@@ -76,6 +76,7 @@ def get_country_group(iso):
 # Add this column to your dataframe
 cluster["Group"] = cluster["ISO"].apply(get_country_group)
 
+"""
 # Pre-compute PCA components for clustering
 all_features = sum(dimensions.values(), [])
 
@@ -86,13 +87,14 @@ components_full = pca_full.transform(cluster[all_features].fillna(0))  # Fill NA
 
 cluster['PC1'] = components_full[:, 0]
 cluster['PC2'] = components_full[:, 1]
-
+"""
 
 # -----------------------------
 # App Initialization
 # -----------------------------
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 server = app.server
+
 # -----------------------------
 # Layout
 # -----------------------------
@@ -272,14 +274,20 @@ def update_clusters(n_clusters, macro_vars, nature_vars, green_vars, climate_var
         return px.scatter(title="Select at least 2 features")
 
     df = cluster.copy()
-    X = df[selected_features].dropna()
 
+    # Recompute PCA dynamically
+    X = df[selected_features].fillna(0)
+    pca = PCA(n_components=2)
+    components = pca.fit_transform(X)
+    df['PC1'] = components[:, 0]
+    df['PC2'] = components[:, 1]
+
+    # Recompute clustering
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-    df.loc[X.index, 'cluster'] = kmeans.fit_predict(X)
+    df['cluster'] = kmeans.fit_predict(X)
     df['cluster_name'] = df['cluster'].map(lambda c: cluster_names.get(c, f"Cluster {c}"))
 
     if viz_mode == 'highlight':
-        # --- Highlight Mode ---
         df['opacity'] = 1.0
         if group_filter != 'All':
             df['opacity'] = df['Group'].apply(lambda g: 1.0 if g == group_filter else 0.2)
@@ -292,16 +300,10 @@ def update_clusters(n_clusters, macro_vars, nature_vars, green_vars, climate_var
             hover_name='ISO',
             color_discrete_map=color_map
         )
-        fig.update_traces(
-            marker=dict(
-                size=df['marker_size'],
-                opacity=df['opacity']
-            )
-        )
+        fig.update_traces(marker=dict(size=df['marker_size'], opacity=df['opacity']))
 
     else:
-        # --- Bubble Mode ---
-        df['marker_size'] = df[bubble_var].fillna(0.1)  # avoid zeros
+        df['marker_size'] = df[bubble_var].fillna(0.1)
         fig = px.scatter(
             df, x='PC1', y='PC2',
             color='cluster_name',
