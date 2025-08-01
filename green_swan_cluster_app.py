@@ -95,6 +95,7 @@ cluster['PC2'] = components_full[:, 1]
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 server = app.server
 
+
 # -----------------------------
 # Layout
 # -----------------------------
@@ -115,145 +116,155 @@ app.layout = dbc.Container([
 # -----------------------------
 # Tabs content callback
 # -----------------------------
-@app.callback(
-    Output('tabs-content', 'children'),
-    Input('tabs', 'value')
-)
-def render_content(tab):
-    if tab == 'tab-cluster':
-        return dbc.Container([
-            # --- Feature selection ---
-            dbc.Row([
-                dbc.Col([
-                    html.Label("Macro Stability"),
-                    dcc.Dropdown(
-                        id='macro-dropdown',
-                        options=[{'label': v, 'value': v} for v in dimensions["Macro Stability"]],
-                        value=dimensions["Macro Stability"],
-                        multi=True
-                    )
-                ], width=3),
-                dbc.Col([
-                    html.Label("Nature"),
-                    dcc.Dropdown(
-                        id='nature-dropdown',
-                        options=[{'label': v, 'value': v} for v in dimensions["Nature"]],
-                        value=dimensions["Nature"],
-                        multi=True
-                    )
-                ], width=3),
-                dbc.Col([
-                    html.Label("Green Competitiveness"),
-                    dcc.Dropdown(
-                        id='green-dropdown',
-                        options=[{'label': v, 'value': v} for v in dimensions["Green Competitiveness"]],
-                        value=dimensions["Green Competitiveness"],
-                        multi=True
-                    )
-                ], width=3),
-                dbc.Col([
-                    html.Label("Climate Adaptation & Vulnerability"),
-                    dcc.Dropdown(
-                        id='climate-dropdown',
-                        options=[{'label': v, 'value': v} for v in dimensions["Climate Adaptation and vulnerability"]],
-                        value=dimensions["Climate Adaptation and vulnerability"],
-                        multi=True
-                    )
-                ], width=3)
-            ], className="mb-4"),
+app.layout = dbc.Container([
+    dbc.NavbarSimple(
+        brand="Country Clustering Dashboard",
+        color="primary",
+        dark=True,
+        className="mb-4"
+    ),
+    dcc.Tabs(id="tabs", value='tab-cluster', children=[
+        # ------------------- CLUSTERING TAB -------------------
+        dcc.Tab(label='Clustering Visualization', value='tab-cluster', children=[
+            dbc.Container([
+                # --- Feature selection ---
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Macro Stability"),
+                        dcc.Dropdown(
+                            id='macro-dropdown',
+                            options=[{'label': v, 'value': v} for v in dimensions["Macro Stability"]],
+                            value=dimensions["Macro Stability"],
+                            multi=True
+                        )
+                    ], width=3),
+                    dbc.Col([
+                        html.Label("Nature"),
+                        dcc.Dropdown(
+                            id='nature-dropdown',
+                            options=[{'label': v, 'value': v} for v in dimensions["Nature"]],
+                            value=dimensions["Nature"],
+                            multi=True
+                        )
+                    ], width=3),
+                    dbc.Col([
+                        html.Label("Green Competitiveness"),
+                        dcc.Dropdown(
+                            id='green-dropdown',
+                            options=[{'label': v, 'value': v} for v in dimensions["Green Competitiveness"]],
+                            value=dimensions["Green Competitiveness"],
+                            multi=True
+                        )
+                    ], width=3),
+                    dbc.Col([
+                        html.Label("Climate Adaptation & Vulnerability"),
+                        dcc.Dropdown(
+                            id='climate-dropdown',
+                            options=[{'label': v, 'value': v} for v in dimensions["Climate Adaptation and vulnerability"]],
+                            value=dimensions["Climate Adaptation and vulnerability"],
+                            multi=True
+                        )
+                    ], width=3)
+                ], className="mb-4"),
 
-            # --- Visualization mode and filters ---
-            dbc.Row([
-                dbc.Col([
-                    html.Label("Visualization Mode"),
-                    dcc.RadioItems(
-                        id='viz-mode',
-                        options=[
-                            {'label': 'Highlight Groups', 'value': 'highlight'},
-                            {'label': 'Bubble Size', 'value': 'bubble'}
-                        ],
-                        value='highlight',
-                        inline=True
-                    )
-                ], width=6),
+                # --- Visualization mode and filters ---
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Visualization Mode"),
+                        dcc.RadioItems(
+                            id='viz-mode',
+                            options=[
+                                {'label': 'Highlight Groups', 'value': 'highlight'},
+                                {'label': 'Bubble Size', 'value': 'bubble'}
+                            ],
+                            value='highlight',
+                            inline=True
+                        )
+                    ], width=6),
 
-                dbc.Col([
-                    html.Label("Group Filter"),
-                    dcc.Dropdown(
-                        id='group-filter',
-                        options=[
-                            {'label': 'All', 'value': 'All'},
-                            {'label': 'OECD', 'value': 'OECD'},
-                            {'label': 'BRICS', 'value': 'BRICS'},
-                            {'label': 'BRICS+', 'value': 'BRICS+'}
-                        ],
-                        value='All',
-                        clearable=False
-                    )
-                ], width=3),
+                    dbc.Col([
+                        html.Label("Group Filter"),
+                        dcc.Dropdown(
+                            id='group-filter',
+                            options=[
+                                {'label': 'All', 'value': 'All'},
+                                {'label': 'OECD', 'value': 'OECD'},
+                                {'label': 'BRICS', 'value': 'BRICS'},
+                                {'label': 'BRICS+', 'value': 'BRICS+'}
+                            ],
+                            value='All',
+                            clearable=False
+                        )
+                    ], width=3),
 
-                dbc.Col([
-                    html.Label("Bubble Size Variable"),
-                    dcc.Dropdown(
-                        id='bubble-variable',
-                        options=[
-                            {'label': 'CO₂ emissions', 'value': 'CO2_per_capita'},
-                            {'label': 'Finance needs', 'value': 'Needs'}
-                        ],
-                        value='CO2_per_capita',
-                        clearable=False
-                    )
-                ], width=3)
-            ], className="mb-4"),
+                    dbc.Col([
+                        html.Label("Bubble Size Variable"),
+                        dcc.Dropdown(
+                            id='bubble-variable',
+                            options=[
+                                {'label': 'CO₂ emissions', 'value': 'CO2_per_capita'},
+                                {'label': 'Finance needs', 'value': 'Needs'}
+                            ],
+                            value='CO2_per_capita',
+                            clearable=False
+                        )
+                    ], width=3)
+                ], className="mb-4"),
 
-            # --- Cluster slider ---
-            dbc.Row([
-                dbc.Col([
-                    html.Label("Select Number of Clusters"),
-                    dcc.Slider(
-                        id='cluster-slider',
-                        min=2, max=6,
-                        step=1, value=4,
-                        marks={i: str(i) for i in range(2, 7)}
-                    )
-                ], width=12)
-            ], className="mb-4"),
+                # --- Cluster slider ---
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Select Number of Clusters"),
+                        dcc.Slider(
+                            id='cluster-slider',
+                            min=2, max=6,
+                            step=1, value=4,
+                            marks={i: str(i) for i in range(2, 7)}
+                        )
+                    ], width=12)
+                ], className="mb-4"),
 
-            # --- Graph output ---
-            dbc.Row([
-                dbc.Col(dcc.Graph(id='cluster-graph'), width=12)
+                # --- Graph output ---
+                dbc.Row([
+                    dbc.Col(dcc.Graph(id='cluster-graph'), width=12)
+                ])
+            ])
+        ]),
+
+        # ------------------- DATA EXPLORER TAB -------------------
+        dcc.Tab(label='Data Explorer', value='tab-data', children=[
+            dbc.Container([
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Select Variable"),
+                        dcc.Dropdown(
+                            id='variable-dropdown',
+                            options=[{'label': col, 'value': col} for col in variable_definitions.keys()],
+                            value=list(variable_definitions.keys())[0],
+                            clearable=False
+                        ),
+                        html.Br(),
+                        dash_table.DataTable(
+                            id='variable-table',
+                            columns=[
+                                {"name": "ISO", "id": "ISO"},
+                                {"name": "Value", "id": "Value"}
+                            ],
+                            page_size=15,
+                            style_table={'overflowX': 'auto'},
+                            style_cell={'textAlign': 'left', 'padding': '5px'},
+                            style_header={'backgroundColor': '#f8f9fa', 'fontWeight': 'bold'}
+                        )
+                    ], width=5),
+                    dbc.Col([
+                        dcc.Graph(id='variable-map')
+                    ], width=7)
+                ])
             ])
         ])
+    ])
+], fluid=True)
 
-    elif tab == 'tab-data':
-        return dbc.Container([
-            dbc.Row([
-                dbc.Col([
-                    html.Label("Select Variable"),
-                    dcc.Dropdown(
-                        id='variable-dropdown',
-                        options=[{'label': col, 'value': col} for col in variable_definitions.keys()],
-                        value=list(variable_definitions.keys())[0],
-                        clearable=False
-                    ),
-                    html.Br(),
-                    dash_table.DataTable(
-                        id='variable-table',
-                        columns=[
-                            {"name": "ISO", "id": "ISO"},
-                            {"name": "Value", "id": "Value"}
-                        ],
-                        page_size=15,
-                        style_table={'overflowX': 'auto'},
-                        style_cell={'textAlign': 'left', 'padding': '5px'},
-                        style_header={'backgroundColor': '#f8f9fa', 'fontWeight': 'bold'}
-                    )
-                ], width=5),
-                dbc.Col([
-                    dcc.Graph(id='variable-map')
-                ], width=7)
-            ])
-        ])
 # -----------------------------
 # Cluster graph callback
 # -----------------------------
@@ -336,22 +347,29 @@ def update_clusters(n_clusters, macro_vars, nature_vars, green_vars, climate_var
 # Data explorer callback
 # -----------------------------
 @app.callback(
-    [Output('variable-table', 'data'),
-     Output('variable-map', 'figure')],
+    Output('variable-table', 'data'),
+    Output('variable-map', 'figure'),
     Input('variable-dropdown', 'value')
 )
 def update_data_explorer(selected_variable):
-    # Always pull fresh values
     df = cluster.copy()
-    
-    # Handle missing data safely
+
+    #  Check variable existence
+    if selected_variable not in df.columns:
+        fig = px.choropleth(title="Variable not found")
+        return [], fig
+
+    #  Ensure numeric or fallback
+    if not pd.api.types.is_numeric_dtype(df[selected_variable]):
+        df[selected_variable] = pd.to_numeric(df[selected_variable], errors='coerce')
+
     df[selected_variable] = df[selected_variable].fillna(0)
 
-    # Table
+    #  Table
     table_data = df[['ISO', selected_variable]].rename(columns={selected_variable: "Value"})
     table_records = table_data.to_dict('records')
 
-    # Choropleth map
+    #  Choropleth
     fig = px.choropleth(
         df,
         locations="ISO",
@@ -369,6 +387,7 @@ def update_data_explorer(selected_variable):
     )
 
     return table_records, fig
+
 
 # -----------------------------
 # Run App
