@@ -341,11 +341,19 @@ def update_clusters(n_clusters, macro_vars, nature_vars, green_vars, climate_var
     Input('variable-dropdown', 'value')
 )
 def update_data_explorer(selected_variable):
-    table_data = cluster[['ISO', selected_variable]].rename(columns={selected_variable: "Value"})
+    # Always pull fresh values
+    df = cluster.copy()
+    
+    # Handle missing data safely
+    df[selected_variable] = df[selected_variable].fillna(0)
+
+    # Table
+    table_data = df[['ISO', selected_variable]].rename(columns={selected_variable: "Value"})
     table_records = table_data.to_dict('records')
 
+    # Choropleth map
     fig = px.choropleth(
-        cluster,
+        df,
         locations="ISO",
         color=selected_variable,
         hover_name="ISO",
