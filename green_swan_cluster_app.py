@@ -776,7 +776,7 @@ app.layout = dbc.Container([
     Input('green-dropdown', 'value'),
     Input('climate-dropdown', 'value'),
     Input('viz-mode', 'value'),
-    Input('group-filter', 'value'),
+    Input('group-filter-cluster', 'value'),
     Input('bubble-variable', 'value')
 )
 def update_clusters(n_clusters, macro_vars, nature_vars, green_vars, climate_vars, viz_mode, group_filter, bubble_var):
@@ -935,5 +935,6 @@ def update_average_distance(club_name):
 # -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
