@@ -5,7 +5,7 @@ import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-
+import itertools
 # -----------------------------
 # Load Data
 # -----------------------------
@@ -14,7 +14,7 @@ cluster = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/e136e9dcd7d1e4
 
 bubble = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/main/bubble_filling.csv?raw=true")
 cluster = cluster.merge(bubble, on="ISO", how="left")
-
+ipd_data = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/bd0cc5e018f2f402681e7f6dad0fdb23f5c775ed/IdealpointsJuly2025.csv?raw=true")
 # -----------------------------
 # Dimensions and variable groups
 # -----------------------------
@@ -506,6 +506,51 @@ group_filter_options = [
     {'label': 'Commonwealth of Independent States (CIS)', 'value': 'CIS'}
 ]
 
+
+
+# -------------------------
+# Function to compute avg distance
+# -------------------------
+def average_distance(df, iso_list):
+    subset = df[df['iso3c'].isin(iso_list)]
+    values = subset['idealpointfp'].values
+    pairs = list(itertools.combinations(values, 2))
+    distances = [abs(a - b) for a, b in pairs]
+    return sum(distances) / len(distances) if distances else None
+# -------------------------
+# Define a function to retrieve the list dynamically
+# -------------------------
+
+def get_iso_list(club_name):
+    # Map group values to variable names
+    group_map = {
+        "OECD": "OECD_members",
+        "BRICS": "BRICS_members",
+        "BRICS+": "BRICS_plus_members",
+        "G7": "g7_iso3",
+        "Coalition": "coalition_iso_alpha3",
+        "COP30": "cop_30_mofs",
+        "NGFS": "ngfs_iso_alpha3",
+        "BOGA": "boga_iso_alpha3",
+        "PPCA": "ppca_iso_alpha3",
+        "FF_NPT": "ff_npt_iso_alpha3",
+        "Port_Vila": "port_vila_call_iso_alpha3",
+        "CNC": "cnc_iso_alpha3",
+        "COFFS": "coffis_iso_alpha3",
+        "GCPA": "gcpa_finance_mission_iso_alpha3",
+        "SIDS": "sids_energy_transition_iso_alpha3",
+        "V20": "v20_iso_alpha3",
+        "EU": "eu_iso_alpha3",
+        "AU": "african_union_iso_alpha3",
+        "CELAC": "celac_iso_alpha3",
+        "ASEAN": "asean_iso_alpha3",
+        "Commonwealth": "commonwealth_iso_alpha3",
+        "SCO": "sco_iso_alpha3",
+        "CIS": "cis_iso_alpha3"
+    }
+    return globals().get(group_map.get(club_name, ""), [])
+
+
 # -----------------------------
 # App Initialization
 # -----------------------------
@@ -516,6 +561,10 @@ server = app.server
 # Layout
 # -----------------------------
 
+
+# -----------------------------
+# Layout
+# -----------------------------
 app.layout = dbc.Container([
     dbc.NavbarSimple(
         brand="Country Clustering Dashboard",
@@ -524,6 +573,7 @@ app.layout = dbc.Container([
         className="mb-4"
     ),
     dcc.Tabs(id="tabs", value='tab-cluster', children=[
+
         # ------------------- CLUSTERING TAB -------------------
         dcc.Tab(label='Clustering Visualization', value='tab-cluster', children=[
             dbc.Container([
@@ -573,12 +623,11 @@ app.layout = dbc.Container([
                                 {'label': variable_labels[v], 'value': v} 
                                 for v in dimensions["Climate Adaptation and vulnerability"]
                             ],
-                            value=["IMF-Adapted Readiness score_scaled","Vulnerability score_scaled",],
+                            value=["IMF-Adapted Readiness score_scaled","Vulnerability score_scaled"],
                             multi=True
                         )
                     ], width=3)
                 ], className="mb-4"),
-
 
                 # --- Visualization mode and filters ---
                 dbc.Row([
@@ -598,7 +647,7 @@ app.layout = dbc.Container([
                     dbc.Col([
                         html.Label("Group Filter"),
                         dcc.Dropdown(
-                            id='group-filter',
+                            id='group-filter-cluster',
                             options=group_filter_options,
                             value='All',
                             clearable=False
@@ -649,7 +698,7 @@ app.layout = dbc.Container([
                             id='variable-dropdown',
                             options=[
                                 {
-                                    'label': variable_labels.get(col, col),  # Use friendly label if available
+                                    'label': variable_labels.get(col, col),
                                     'value': col
                                 }
                                 for col in variable_definitions.keys()
@@ -674,6 +723,42 @@ app.layout = dbc.Container([
                     dbc.Col([
                         dcc.Graph(id='variable-map')
                     ], width=7)
+                ])
+            ])
+        ]),
+
+        # ------------------- COMPARE CLIMATE CLUB TAB -------------------
+        dcc.Tab(label='Compare Climate Club', value='tab-ClimateClub', children=[
+            dbc.Container([
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Group Filter"),
+                        dcc.Dropdown(
+                            id='group-filter-club',
+                            options=group_filter_options,
+                            value='All',
+                            clearable=False
+                        ),
+                        html.Div(id="club-output", style={"marginTop": "20px"})
+                    ])
+                ])
+            ])
+        ]),
+
+        # ------------------- CLIMATE CLUB CREATOR TAB -------------------
+        dcc.Tab(label='Climate Club Creator', value='tab-ClimateClubCreator', children=[
+            dbc.Container([
+                dbc.Row([
+                    dbc.Col([
+                        html.Label("Group Filter"),
+                        dcc.Dropdown(
+                            id='group-filter-creator',
+                            options=group_filter_options,
+                            value='All',
+                            clearable=False
+                        ),
+                        html.Div(id="club-output-creator", style={"marginTop": "20px"})
+                    ])
                 ])
             ])
         ])
@@ -827,10 +912,28 @@ def update_data_explorer(selected_variable):
     return table_records, fig
 
 
+# -----------------------------
+# Compare Climate Club callback
+# -----------------------------
+@app.callback(
+    Output("club-output", "children"),
+    Input("group-filter-club", "value")
+)
+def update_average_distance(club_name):
+    iso_list = get_iso_list(club_name)
+    avg_dist = average_distance(ipd_data, iso_list)
+    
+    if avg_dist is None:
+        return f"No data available for {club_name}."
+    else:
+        return f"Average distance for {club_name}: {avg_dist:.3f}"
+
+
 
 # -----------------------------
 # Run App
 # -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)
+
 
