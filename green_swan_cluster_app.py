@@ -6,6 +6,7 @@ from dash import Dash, dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import itertools
+import numpy as np
 # -----------------------------
 # Load Data
 # -----------------------------
@@ -14,7 +15,7 @@ cluster = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/e136e9dcd7d1e4
 
 bubble = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/main/bubble_filling.csv?raw=true")
 cluster = cluster.merge(bubble, on="ISO", how="left")
-ipd_data = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/bd0cc5e018f2f402681e7f6dad0fdb23f5c775ed/IdealpointsJuly2025.csv?raw=true")
+ipd_data = pd.read_csv(r"https://github.com/gohu00/Green_swan/blob/6d35fef595813e2e7d356e74c1f4475318673d40/IdealpointsJuly2025.csv?raw=true")
 # -----------------------------
 # Dimensions and variable groups
 # -----------------------------
@@ -512,11 +513,102 @@ group_filter_options = [
 # Function to compute avg distance
 # -------------------------
 def average_distance(df, iso_list):
-    subset = df[df['iso3c'].isin(iso_list)]
-    values = subset['idealpointfp'].values
+    subset = df[df['ISO'].isin(iso_list)]
+    values = subset['geopolitical_distance'].values
     pairs = list(itertools.combinations(values, 2))
     distances = [abs(a - b) for a, b in pairs]
     return sum(distances) / len(distances) if distances else None
+
+
+# -------------------------
+# Make dataset for club summary
+# -------------------------
+
+club_name_map = {
+    'is_OECD': 'OECD',
+    'is_BRICS': 'BRICS',
+    'is_BRICS_plus': 'BRICS_Plus',
+    'is_G7': 'G7',
+    'is_Coalition': 'Coalition',
+    'is_COP30': 'COP30',
+    'is_NGFS': 'NGFS',
+    'is_BOGA': 'BOGA',
+    'is_PPCA': 'PPCA',
+    'is_FF_NPT': 'FF_NPT',
+    'is_Port_Vila': 'Port_Vila',
+    'is_CNC': 'CNC',
+    'is_COFFS': 'COFFS',
+    'is_GCPA': 'GCPA',
+    'is_SIDS': 'SIDS',
+    'is_V20': 'V20',
+    'is_EU': 'EU',
+    'is_AU': 'AU',
+    'is_CELAC': 'CELAC',
+    'is_ASEAN': 'ASEAN',
+    'is_SCO': 'SCO',
+    'is_CIS': 'CIS',
+    'is_Commonwealth': 'Commonwealth',
+    'is_4P': '4P',
+    'is_Basel': 'Basel',
+    'is_Paris_Club': 'Paris_Club'
+}
+
+
+# List of club columns
+club_columns = [col for col in cluster.columns if col.startswith('is_')]
+
+# Prepare the output list
+summary = []
+
+# Loop through each club column
+for club in club_columns:
+    club_name = club_name_map.get(club, club.replace('is_', ''))
+    members = cluster[cluster[club] == True]
+    iso_list = members['ISO'].dropna().tolist()  # Assuming 'ISO' is equivalent to 'iso3c'
+    num_members = len(iso_list)
+    avg_pairwise_distance = average_distance(cluster, iso_list)
+    
+    summary.append({
+        'Club Name': club_name,
+        'Number of Members': num_members,
+        'Average Pairwise Geopolitical Distance': avg_pairwise_distance
+    })
+
+# Create the final dataframe
+club_summary_df = pd.DataFrame(summary)
+
+# Create the metadata as a dictionary
+club_metadata = {
+    "Club": [
+        "OECD", "BRICS", "BRICS_Plus", "G7", "Coalition", "COP30", "NGFS",
+        "BOGA", "PPCA", "FF_NPT", "Port_Vila", "CNC", "COFFS", "GCPA",
+        "SIDS", "V20", "EU", "AU", "CELAC", "ASEAN", "Commonwealth",
+        "SCO", "CIS", "4P", "Basel", "Paris_Club"
+    ],
+    "Economic Integration": [
+        4, 3, 2, 4, 2, 2, 3,
+        1, 1, 1, 1, 2, 1, 2,
+        1, 2, 5, 3, 2, 3, 1,
+        3, 2, 1, 4, 3
+    ],
+    "Climate Ambition": [
+        2, 1, 1, 3, 3, 3, 3,
+        4, 4, 5, 4, 4, 4, 3,
+        4, 4, 5, 2, 2, 2, 1,
+        1, 1, 5, 2, 2
+    ]
+}
+
+# Convert metadata to a DataFrame
+metadata_df = pd.DataFrame(club_metadata)
+
+# Merge with your existing summary DataFrame
+club_summary_df = club_summary_df.merge(metadata_df, left_on='Club Name', right_on='Club', how='left')
+
+# Drop redundant 'Club' column if desired
+club_summary_df.drop(columns='Club', inplace=True)
+
+
 # -------------------------
 # Define a function to retrieve the list dynamically
 # -------------------------
@@ -744,6 +836,16 @@ app.layout = dbc.Container([
                 ])
             ])
         ]),
+         # ------------------- CLIMATE CLUB MATRIX TAB -------------------
+        dcc.Tab(label='Climate Club Matrix', value='tab-ClimateClubMatrix', children=[
+            dbc.Container([
+                dbc.Row([
+                    dbc.Col([
+                        dcc.Graph(id="climate-club-matrix")
+                    ], width=12)
+                ])
+            ])
+        ]),
 
         # ------------------- CLIMATE CLUB CREATOR TAB -------------------
         dcc.Tab(label='Climate Club Creator', value='tab-ClimateClubCreator', children=[
@@ -764,6 +866,10 @@ app.layout = dbc.Container([
         ])
     ])
 ], fluid=True)
+
+# -----------------------------
+# Cluster graph callback
+# -----------------------------
 
 # -----------------------------
 # Cluster graph callback
@@ -912,6 +1018,8 @@ def update_data_explorer(selected_variable):
     return table_records, fig
 
 
+
+
 # -----------------------------
 # Compare Climate Club callback
 # -----------------------------
@@ -931,10 +1039,67 @@ def update_average_distance(club_name):
 
 
 # -----------------------------
+# Climate Club Matrix callback
+# -----------------------------
+@app.callback(
+    Output("climate-club-matrix", "figure"),
+    Input("tabs", "value")  # refresh when switching tabs
+)
+def update_climate_club_matrix(tab_value):
+    # Example dataset (0–10 scale)
+
+    club_summary_df["x_jitter"] = club_summary_df["Economic Integration"] + np.random.uniform(-0.1, 0.1, size=len(club_summary_df))
+    club_summary_df["y_jitter"] = club_summary_df["Climate Ambition"] + np.random.uniform(-0.1, 0.1, size=len(club_summary_df))
+
+    # Scatter plot
+    fig = px.scatter(
+        club_summary_df,
+        x="x_jitter",
+        y="y_jitter",
+        size='Number of Members',
+        color='Average Pairwise Geopolitical Distance',
+        hover_name='Club Name',
+        size_max=60,
+        color_continuous_scale='RdBu',
+        title="Climate Clubs: Ambition vs Economic Integration (0–5 scale)"
+    )
+
+    # Labels
+    fig.update_traces(textposition="top center")
+
+    # Axes
+    fig.update_layout(
+        xaxis_title="Economic Integration (0–5)",
+        yaxis_title="Climate Ambition (0–5)",
+        xaxis=dict(range=[0, 5]),
+        yaxis=dict(range=[0, 5]),
+        plot_bgcolor="white"
+    )
+
+    #  Add vertical line at X=2.5
+    fig.add_shape(
+        type="line",
+        x0=2.5, x1=2.5,
+        y0=0, y1=5,
+        line=dict(color="black", width=1, dash="dash")
+    )
+
+    #  Add horizontal line at Y=2.5
+    fig.add_shape(
+        type="line",
+        x0=0, x1=5,
+        y0=2.5, y1=2.5,
+        line=dict(color="black", width=1, dash="dash")
+    )
+
+    return fig
+
+# -----------------------------
 # Run App
 # -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
