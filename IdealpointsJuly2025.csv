@@ -1,4 +1,4 @@
-iso3c,countryname,idealpointfp
+ISO,countryname,geopolitical_distance
 USA,United States,2.206202
 CAN,Canada,1.210571
 BHS,Bahamas,-0.1377822
@@ -191,3 +191,4 @@ PLW,Palau,0.6370342
 FSM,Micronesia (Federated States of),1.114128
 WSM,Samoa,-0.05321489
 EU,European Union,-0.04147047
+
