@@ -316,26 +316,20 @@ sids_energy_transition_iso_alpha3 = [
 ]
 
 v20_iso_alpha3 = [
-    "AFG",  # Afghanistan
-    "BGD",  # Bangladesh
-    "BRB",  # Barbados
-    "BTN",  # Bhutan
-    "CRI",  # Costa Rica
-    "ETH",  # Ethiopia
-    "GHA",  # Ghana
-    "KEN",  # Kenya
-    "KIR",  # Kiribati
-    "MDG",  # Madagascar
-    "MDV",  # Maldives
-    "NPL",  # Nepal
-    "PHL",  # Philippines
-    "RWA",  # Rwanda
-    "LCA",  # Saint Lucia
-    "TZA",  # Tanzania
-    "TLS",  # Timor-Leste
-    "TUV",  # Tuvalu
-    "VUT",  # Vanuatu
-    "VNM"   # Vietnam
+   # Africa & Middle East (32)
+    "BEN", "BFA", "TCD", "COM", "CIV", "COD", "SWZ", "ETH",
+    "GMB", "GHA", "KEN", "LBN", "LBR", "MDG", "MWI", "MAR",
+    "NER", "PSE", "RWA", "SEN", "SSD", "SDN", "TZA", "TUN",
+    "YEM", "UGA", "GIN", "JOR", "SLE", "TGO", "NAM", "MOZ",
+
+    # Asia–Pacific (22)
+    "AFG", "BGD", "BTN", "KHM", "FJI", "KIR", "KGZ", "MDV",
+    "MHL", "MNG", "NPL", "PLW", "PNG", "PHL", "WSM", "LKA",
+    "TLS", "TUV", "VUT", "VNM", "PAK", "TON",
+
+    # Latin America & Caribbean (14)
+    "BRB", "COL", "CRI", "DOM", "GRD", "GUY", "GTM", "HTI",
+    "HND", "NIC", "LCA", "DMA", "SUR", "TTO"
 ]
 
 eu_iso_alpha3 = [
@@ -1099,6 +1093,7 @@ def update_climate_club_matrix(tab_value):
 # -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
